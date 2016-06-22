@@ -1,0 +1,265 @@
+<!doctype html>
+<html>
+	<head>
+		<link rel="shortcut icon" href="sync.png">
+		<title>HitGrabber</title>
+		<link type="text/css" rel="stylesheet" href="materialize/css/materialize.min.css"  media="screen,projection"/>
+		<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+		<base target="blank">
+		<link rel="stylesheet" type="text/css" href="style.css">
+		<script type="text/javascript" src="socket.io-1.3.2.js"></script>
+		<script src="http://code.jquery.com/jquery-2.1.1.js"></script>	
+		<script src="materialize/js/materialize.min.js"></script>	
+		<meta name="google-site-verification" content="5V_kBY5VeDg_9MCTwVvw1O5Vs0a4AMOy8sIHFCLHO80" />
+	</head>
+	<body>
+		<div class="container">
+			<div class="row">
+				<div class="col s8 offset-s2 center-align" style="color:white;">
+					<div class="hg">
+						<h3>HitGrabber</h3>
+					</div>
+					<p>
+					<h6>A crowdsourced notifier for the best mturk HITs | Compatible with Chrome and Firefox | <a href="http://reddit.com/r/hitgrabber">/r/HitGrabber</a></h6>
+					<p>
+				</div>
+
+				<!-- Container card --> 
+				<div class="col s12 m8 offset-m2 card" style="overflow: visible">
+
+					<!-- Tabs -->
+				    <div class="col s12 card">
+				    	<ul class="tabs">
+				        	<li class="tab col s3"><a href="#current_hit" class="active" onClick='$("#current_hit").fadeIn(1000);'>Latest</a></li>
+				        	<li class="tab col s3"><a href="#previous_hits" onClick='$("#previous_hits").fadeIn(1000);'>Previous</a></li>
+				        	<li class="tab col s3"><a href="#options" onClick='$("#options").fadeIn(1000);'>Options</a></li>
+				        	<li class="tab col s3"><a href="#about" onClick='$("#about").fadeIn(1000);'>About</a></li>
+				        </ul>
+				    </div>
+
+				    <!-- Current HIT -->	
+					    <div id="current_hit" class="col s12 m8 offset-m2 card">
+					    	<div id="timestamp" class="center-align"></div>
+					    	<div class="valign" id="lasthitbox"></div>
+
+					    	<!-- Running indicator -->
+							<div class="col s12 progress" id="runningIndicator">
+								  <div class="indeterminate red" id="progressBar" style="width: 0%"></div>
+							</div>
+
+							<!-- Start/Stop Button -->
+								<div class="col s8 offset-s2">
+									<a class="waves-effect waves-light btn" id="start" onClick="start()">Start Listening</a>
+									<a class="waves-effect waves-light btn" id="stop" onClick="stop()" style="display:none">Stop Listening</a>
+								</div>
+							<div class="col s12"><br></div>
+						</div>
+
+				    <!-- Previous HITs -->
+				    <div id="previous_hits" class="col s12 m12">
+				    	<div class="col s12 center-align" id="content-box">
+							<ul class="collapsible popout" id="previousHits" data-collapsible="accordion"></ul>
+						</div>
+				    </div>
+
+				    <!-- Options -->
+				    <div id="options" class="col s12" style="overflow: visible">
+			    		
+						<!-- Services to scrape --> 	
+						<div class="col s12 card">
+							<div class="col s12 center-align">
+								<h5>Services to Scrape</h5>
+							</div>
+
+							<div class="col s8 offset-s2">
+								<!-- HWTF -->
+								<div class="col s6">
+									<input type="checkbox" checked="true" id="hwtfCheckbox" />
+									<label for="hwtfCheckbox">/r/hitsworthturkingfor</label>
+								</div>
+
+								<!-- MturkForum -->
+								<div class="col s6">
+									<input type="checkbox" checked="true" id="mturkforumCheckbox" />
+									<label for="mturkforumCheckbox">MturkForum.com</label>
+								</div>	
+								
+								<div class="col s6">
+									<input type="checkbox" checked="true" id="mturkcrowdCheckbox" />
+									<label for="mturkcrowdCheckbox">MTurkCrowd.com</label>
+								</div>
+								<!-- MturkGrind -->
+								<div class="col s6">
+									<input type="checkbox" checked="true" id="mturkgrindCheckbox" />
+									<label for="mturkgrindCheckbox">MturkGrind.com</label>
+								</div>	
+							</div>
+							<div class="col s12"><p></div>	
+						</div>	
+
+						<!-- Sound Options --> 
+						<div class="col s12 card" style="overflow: visible">
+
+							<!-- Label -->
+							<div class="col s12 center-align">
+								<h5>Notification Options</h5>
+							</div>
+
+							<div class="col s12" style="overflow: visible">
+
+								<!-- Volume slider & mute -->
+								<div class="col s6">
+									<form action="#">
+									    <p class="range-field">
+									    	<label for="volume_level">Volume Level:</label>
+									        <input type="range" id="volume_level" min="0" max="100" />
+									        <input type="checkbox" onClick='muteSound()' id="sound" />
+											<label for="sound">Mute</label>
+									    </p>
+									</form>
+								</div>
+
+								<!-- Notification sound select -->
+								<div class="input-field col s6">
+								    <select id="sound_select" onChange='playSound()'>
+								    	<option value="cashregister.wav" selected>Cash Register</option>
+										<option value="alert.mp3">Ring Ring</option>
+										<option value="coin.ogg">Coin</option>
+										<option value="8bitjump.wav">Jump</option>
+										<option value="8bit.mp3">8-Bit</option>
+										<option value="dingaling.mp3">Ding-a-ling</option>
+										<option value="correct.wav">Marimba</option>
+								    </select>
+								    <label>Notification Sound</label>
+								</div>
+
+								<!--Blank spacer -->
+								<div class="col s6"></div>
+
+								<!-- Alert instead of notification -->
+								<div class="col s6">
+									<input type="checkbox" id="alertCheckbox" />
+									<label for="alertCheckbox">Browser alert instead of notification</label>
+								</div>
+								<div class="col s6">
+									<input type="checkbox" id="disable_notifications" />
+									<label for="disable_notifications">Disable Notifications</label>
+								</div>
+								<div class="col s6">
+									<input type="checkbox" checked="true" id="filter_masters" />
+									<label for="filter_masters">Do not show Masters HITs</label>
+								</div>
+							</div>
+							<div class="col s12"><p></div>	
+						</div>	
+				  	</div>
+
+				  	<!-- About Section-->
+				  	<div id="about" class="col s12 m12">
+
+				  		<!-- Description -->
+				  		<div class="center-align">
+					    	<h5>About</h5>
+			      			<p>
+			      				<h6>These days good HITs go fast. To help maximize mturk profit this site uses crowd sourcing to bring your the best and most lucrative HITs, as they are reported. This helps to insure maximum profit for minimal effort and time spent.</h6>
+			      				</p>
+			      				<h6>All you need to do to use this application is load the site and give it permission to notify your browser. Once done, this website will send a browser alert when something new is posted to <a href='http://reddit.com/r/hitsworthturkingfor'>/r/hitsworthturkingfor</a> or <a href='http://mturkforum.com'>mturkforum.com</a>. This must be used with the latest Chrome or Firefox web browser to function correctly.</h6>
+			      			</p>
+
+			      			<p>
+			      				<h6>If you have any problems with the site or have a feature request, please send me a message on <a href="https://www.reddit.com/user/retardeted">Reddit</a>, or send me an email at <a href="mailto:hitgrabber@gmail.com">HITGrabber@gmail.com</a></h6>
+			      			</p>
+		      			</div>
+
+		      			<!-- Changelog -->
+			      		<div class="col s12">
+			      			<p>
+			      				<div class="">
+			      					<h5>Please visit <a href="http://reddit.com/r/hitgrabber"> http://reddit.com/r/HitGrabber </a>for changelog</h5>
+			      				</div>
+		
+						</div>
+
+						<!-- Bugs -->
+						<div class="col s12">
+			      			<p>
+			      				<div class="">
+			      					<h5>Bugs</h5>
+			      				</div>
+			      			</p>
+			      			<p>
+		      					<li>Timestamp not converting from UTC to local time on Firefox</li>
+		      					<li>You tell me!</li>
+		      				</p>
+			      			<p>
+			      				
+			      			</p>
+						</div>
+					</div>
+
+					<!-- Coffee Button & GitHub -->
+				  	<div class="col s12 center-align">
+							
+						<div class="col s12 center-align">
+							<p>
+							<h6>We hope you have enjoyed using HitGrabber! If you feel HitGrabber has helped you out and want to support the team, send us over a donation! Any amount would help support and continue development on this project and is greatly appreciated.</h6>
+							<p>
+							<a class="waves-effect waves-light btn blue lighten-5 blue-text text-darken-2" href="#">Donate Now</a>
+							<h6><a class="modal-trigger" href="https://www.reddit.com/r/HitGrabber/submit?selftext=true">Make a suggestion / Report problem</a></h6>
+							<br>
+							
+						</div>
+						<br>	
+				  	</div>
+				</div>
+
+				<!-- Ads -->
+					
+				<!-- END Ads -->
+			</div>
+			<div class="row">
+				
+			</div>
+		</div>
+
+		<div id="report_modal" class="modal">
+		    <div class="modal-content">
+		    	<div class="center-align">
+				<h5>Contact</h5>
+				<p><h6>Please submit this form to inform me of any issues you may be having with the site, or if you have a feature suggesion. If you wish to be contacted, please leave your email address as well.</h6></p>
+				</div>
+				<br>
+				<div class="row">
+				    <form class="col s12">
+						<div class="row">
+							<div class="input-field col s6">
+								<input id="subject" type="text" class="validate">
+								<label for="subject">Subject</label>
+							</div>
+							<div class="input-field col s6">
+								<input id="email" type="email" class="validate">
+								<label for="email">Email (optional)</label>
+							</div>
+						</div>
+						<div class="row">
+						    <form class="col s12">
+						      	<div class="row">
+						        	<div class="input-field col s12">
+						          		<textarea id="description" class="materialize-textarea"></textarea>
+						          		<label for="description">Description</label>
+					        		</div>
+						      	</div>
+						    </form>
+					  	</div>
+					</form>
+			  	</div>
+		    </div>
+		    <div class="modal-footer">
+				<a href="#" onClick='errorReport()' target="_self" class="modal-action modal-close waves-effect waves-green btn-flat">Submit</a>
+		    </div>
+		</div>
+
+		<script src="listen.js"></script>
+	</body> 
+</html>
